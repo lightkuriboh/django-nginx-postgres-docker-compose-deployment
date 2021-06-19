@@ -1,0 +1,40 @@
+version: '3.3'
+
+services:
+  web:
+    restart: always
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: gunicorn sampleDjangoProject.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    volumes:
+      - static_volume:/home/my_project/web/staticfiles
+      - media_volume:/home/my_project/web/mediafiles
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - db
+  db:
+    restart: always
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.prod.db
+  nginx:
+    restart: always
+    build: ./nginx
+    volumes:
+      - static_volume:/home/my_project/web/staticfiles
+      - media_volume:/home/my_project/web/mediafiles
+    ports:
+      - 2101:80
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
